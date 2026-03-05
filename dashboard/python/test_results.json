@@ -1,0 +1,13 @@
+[
+  {
+    "image_path": "C:\\Users\\hp\\Downloads\\kasd\\pexels-mastercowley-897817.jpg",
+    "timestamp": "2025-12-08T03:54:02.651034",
+    "nsfw_detected": false,
+    "nsfw_confidence": 0.0,
+    "nsfw_classes": [],
+    "faces_detected": 0,
+    "under18_faces": 0,
+    "csam_detected": false,
+    "face_details": []
+  }
+]

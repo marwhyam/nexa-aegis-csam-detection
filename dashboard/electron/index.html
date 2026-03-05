@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Nexa Aegis | Forensic Triage</title>
+<link rel="stylesheet" href="style.css" />
+<link rel="stylesheet" href="./assets/icons/material-icons.css">
+</head>
+<body>
+
+<div class="app">
+
+  <aside>
+    <div class="logo">
+      <span class="material-icons-round">security</span> NEXA AEGIS
+    </div>
+
+    <button id="themeToggle" class="theme-toggle">
+        <span class="material-icons-round">light_mode</span> Light Mode
+    </button>
+
+    <div class="scanner-graphic-container">
+        <div class="radar-sweep"></div>
+        <div class="scanner-status-text">SYSTEM ACTIVE // SCANNING</div>
+    </div>
+
+    <div class="upload-zone" id="dropArea">
+      <div class="upload-icon material-icons-round">cloud_upload</div>
+      <div style="font-weight: 600; margin-bottom: 8px;">Upload Evidence</div>
+      <div class="small" style="color:var(--text-muted); font-size: 0.8rem; margin-bottom: 15px;">Drag & Drop images</div>
+      <input id="file-input" type="file" accept="image/*,video/*" multiple style="display:none"/>
+      <button id="btn-upload" class="btn btn-view" style="width:100%; justify-content: center;">Browse Files</button>
+    </div>
+    
+    <button id="processBtn" class="btn btn-primary">▶ BEGIN ANALYSIS</button>
+
+    <div class="recent-section">
+      <div class="recent-header">Recent Sessions</div>
+      <div class="recent-item"><span class="material-icons-round" style="font-size:16px"></span> </div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="main-header">
+      <h2>Forensic Dashboard</h2>
+      <p>AI-Powered CSAM Detection System</p>
+    </div>
+
+<!-- TOP ROW: 3 CARDS -->
+<div class="triage-grid triage-grid-top">
+  <div class="triage-card c-processed">
+    <div class="triage-label">
+      TOTAL PROCESSED
+      <span class="material-icons-round triage-icon" style="color:var(--cyan-neon)">analytics</span>
+    </div>
+    <div class="triage-value" id="statTotal">0</div>
+  </div>
+
+  <div class="triage-card c-high">
+    <div class="triage-label">
+      HIGH RISK (CSAM)
+      <span class="material-icons-round triage-icon" style="color:var(--red-neon)">report</span>
+    </div>
+    <div class="triage-value" style="color: var(--red-neon);" id="statCSAM">0</div>
+  </div>
+
+  <div class="triage-card c-med">
+    <div class="triage-label">
+      MEDIUM RISK (ADULT)
+      <span class="material-icons-round triage-icon" style="color:var(--amber-neon)">warning</span>
+    </div>
+    <div class="triage-value" style="color: var(--amber-neon);" id="statAdult">0</div>
+  </div>
+</div>
+
+<!-- BOTTOM ROW: 2 CARDS -->
+<div class="triage-grid triage-grid-bottom">
+  <div class="triage-card c-minors">
+    <div class="triage-label">
+      MINORS DETECT (NSFW)
+      <span class="material-icons-round triage-icon" style="color:var(--purple-neon)">face</span>
+    </div>
+    <div class="triage-value" style="color: var(--purple-neon);" id="statMinorsNSFW">0</div>
+  </div>
+
+  <div class="triage-card c-chart">
+    <div class="triage-label">
+      RISK DISTRIBUTION
+      <span class="material-icons-round triage-icon">bar_chart</span>
+    </div>
+    <div class="chart-wrapper">
+      <canvas id="riskChart"></canvas>
+    </div>
+  </div>
+</div>
+
+
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+            <div class="live-indicator"></div> Analysis Results Queue
+        </div>
+        <div style="color:var(--text-muted); font-size: 0.8rem;">Awaiting review</div>
+      </div>
+      <div class="table-container">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Filename</th>
+              <th>Priority</th> 
+              <th>Primary Detection</th>
+              <th>Faces / Minors</th>
+              <th>Confidence</th>
+              <th>Actions</th> 
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="evidenceModal">
+    <div class="evidence-modal">
+        <div class="modal-header">
+            <div class="modal-title"><span class="material-icons-round">lock</span> Secure Evidence Viewer</div>
+            <button class="modal-close" id="closeModalBtn"><span class="material-icons-round">close</span></button>
+        </div>
+        <div class="evidence-body">
+            <div class="image-container">
+                <img src="" alt="Evidence" class="evidence-image" id="modalImagePlaceholder">
+                <div class="blinder-overlay">
+                    <span class="blinder-text">CONTENT OBSCURED</span>
+                </div>
+            </div>
+            <div class="evidence-controls">
+                <div>
+                    <div style="font-weight: 700; color:var(--red-neon)" id="modalRiskLabel">HIGH RISK</div>
+                    <div class="small" style="color:var(--text-muted)">Confirm viewing requirement.</div>
+                </div>
+                <button class="btn-reveal" id="revealBtn">REVEAL IMAGE</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script src="./renderer.js"></script>
+<script>
+    // --- DOM ELEMENTS ---
+    const modal = document.getElementById('evidenceModal');
+    const modalImg = document.getElementById('modalImagePlaceholder');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const revealBtn = document.getElementById('revealBtn');
+    const modalRiskLabel = document.getElementById('modalRiskLabel');
+    const dropArea = document.getElementById('dropArea');
+
+    // --- GLOBAL MODAL FUNCTION (The Fix) ---
+    // We attach this to 'window' so renderer.js can access it safely
+    window.openEvidenceModal = function(imagePath, riskLevel) {
+        if (!imagePath) return alert("Error: No image path provided.");
+
+        // 1. Format the path for Electron
+        // Replaces backslashes with forward slashes
+        let displayPath = imagePath.replace(/\\/g, '/');
+        
+        // 2. Ensure it has the file protocol so the image loads
+        if (!displayPath.startsWith('file://')) {
+            if (!displayPath.startsWith('/')) {
+                displayPath = '/' + displayPath;
+            }
+            displayPath = 'file://' + displayPath;
+        }
+
+        console.log("Opening Modal for:", displayPath);
+        
+        // 3. Update the UI
+        modalImg.src = displayPath;
+        if(modalRiskLabel) modalRiskLabel.innerText = riskLevel + " CONTENT";
+        
+        // 4. Reset 'Reveal' button state
+        modalImg.classList.remove('revealed');
+        if(revealBtn) {
+            revealBtn.innerText = "REVEAL IMAGE";
+            revealBtn.style.background = "var(--red-neon)";
+            revealBtn.style.color = "white";
+        }
+
+        modal.classList.add('active');
+    };
+
+    // --- EVENT LISTENERS ---
+    
+    // Close Button
+    if(closeModalBtn) {
+        closeModalBtn.addEventListener('click', () => {
+            modal.classList.remove('active');
+            modalImg.src = ""; // Clear memory
+        });
+    }
+
+    // Reveal/Obscure Button
+    if(revealBtn) {
+        revealBtn.addEventListener('click', () => {
+            if(modalImg.classList.contains('revealed')) {
+                // Hide it again
+                modalImg.classList.remove('revealed');
+                revealBtn.innerText = "REVEAL IMAGE";
+                revealBtn.style.background = "var(--red-neon)";
+                revealBtn.style.color = "white";
+            } else {
+                // Reveal it
+                modalImg.classList.add('revealed');
+                revealBtn.innerText = "OBSCURE IMAGE";
+                revealBtn.style.background = "var(--bg-card)";
+                revealBtn.style.color = "var(--text-muted)";
+            }
+        });
+    }
+
+    // Drag & Drop Visuals
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, (e) => { 
+            e.preventDefault(); 
+            dropArea.classList.add('dragover'); 
+        }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, (e) => { 
+            e.preventDefault(); 
+            dropArea.classList.remove('dragover'); 
+        }, false);
+    });
+</script>
+</body>
+</html>

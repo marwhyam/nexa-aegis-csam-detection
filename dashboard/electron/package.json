@@ -1,0 +1,14 @@
+{
+  "name": "csam-electron-app",
+  "version": "0.1.0",
+  "description": "Offline CSAM testing UI wrapped with Electron calling local Python pipeline.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^26.0.0"
+  },
+  "author": "You",
+  "license": "MIT"
+}
